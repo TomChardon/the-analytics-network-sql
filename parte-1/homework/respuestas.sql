@@ -175,6 +175,7 @@ ORDER BY sm.pais + ' - ' + sm.provincia
 
 --Mostrar una vista donde sea vea el nombre de tienda y la cantidad de entradas de personas que hubo desde la fecha de --apertura para el sistema 
 --"super_store".
+CREATE VIEW v_ejercicio5_clase3 AS 
 SELECT sm.nombre, SUM(ssc.conteo) AS conteo
 FROM store_master AS sm
 INNER JOIN super_store_count AS ssc ON sm.codigo_tienda = ssc.tienda
