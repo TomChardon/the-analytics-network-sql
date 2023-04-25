@@ -1,4 +1,4 @@
---Tarea 1
+--Clase 1
 
 --Mostrar todos los productos dentro de la categoria electro junto con todos los detalles.
 SELECT *
@@ -31,7 +31,7 @@ SELECT TOP 5 *
 FROM store_master
 ORDER BY fecha_apertura DESC
 
---Mostrar los primeros 10 registros deL conteo de trafico por Super store ordenados por fecha.
+--Mostrar los primeros 10 registros del conteo de trafico por Super store ordenados por fecha.
 SELECT TOP 10 *
 FROM super_store_count
 ORDER BY fecha DESC
@@ -50,7 +50,7 @@ WHERE venta > 100000 AND moneda = 'ARS'
 --Mostrar todas las lineas de ventas de Octubre 2022.
 SELECT *
 FROM order_line_sale
-WHERE MONTH(fecha) = 10
+WHERE MONTH(fecha) = 10 AND YEAR(fecha) = 2022
 
 --Mostrar todos los productos que tengan EAN.
 SELECT *
@@ -62,7 +62,7 @@ SELECT *
 FROM order_line_sale
 WHERE fecha BETWEEN '2022-10-01' AND '2022-11-10';
 
---TAREA 2
+--Clase 2
 
 --Cuales son los paises donde la empresa tiene tiendas?
 SELECT DISTINCT(pais)
@@ -81,7 +81,7 @@ WHERE moneda = 'ARS' AND venta > 100000
 --Obtener los descuentos otorgados durante Noviembre de 2022 en cada una de las monedas?
 SELECT COALESCE(SUM(descuento),0) AS descuento, moneda
 FROM order_line_sale
-WHERE MONTH(fecha) = '11'
+WHERE MONTH(fecha) = 11 AND YEAR(fecha) = 2022
 GROUP BY moneda
 
 --Obtener los impuestos pagados en Europa durante el 2022.
@@ -100,11 +100,10 @@ FROM order_line_sale
 GROUP BY tienda
 
 --Cual es el inventario promedio por dia que tiene cada tienda?
-SELECT tienda, AVG(inicial+final) AS 'Inventario Promedio'
+SELECT tienda, AVG((inicial+final) / 2) AS inventario_promedio
 FROM inventory
 GROUP BY tienda
 ORDER BY tienda
-
 
 --Obtener las ventas netas y el porcentaje de descuento otorgado por producto en Argentina.
 SELECT producto, venta, ((SUM(descuento) / SUM(venta)) * -1) * 100 AS descuento
@@ -115,7 +114,7 @@ HAVING 'descuento' IS NOT NULL
 --Las tablas "market_count" y "super_store_count" representan dos sistemas distintos que usa la empresa 
 --para contar la cantidad de gente que ingresa a tienda, uno para las tiendas 
 --de Latinoamerica y otro para Europa. Obtener en una unica tabla, las entradas a tienda de ambos sistemas.
-SELECT tienda, CONVERT(VARCHAR(10), fecha), conteo
+SELECT tienda, CONVERT(VARCHAR(10), fecha) AS 'fecha', conteo
 FROM market_count
 UNION ALL
 SELECT *
@@ -127,32 +126,30 @@ FROM product_master
 WHERE nombre LIKE '%Philips%' AND is_active = 'True'
 
 --Obtener el monto vendido por tienda y moneda y ordenarlo de mayor a menor por valor nominal.
-SELECT tienda, moneda, SUM(venta - impuestos) AS 'valor nominal'
+SELECT tienda, moneda, SUM(venta - impuestos) AS valor_nominal
 FROM order_line_sale
 GROUP BY tienda, moneda
 ORDER BY 'valor nominal' DESC
 
 --Cual es el precio promedio de venta de cada producto en las distintas monedas? 
 --Recorda que los valores de venta, impuesto, descuentos y creditos es por el total de la linea.
-SELECT producto, AVG(venta + impuestos + COALESCE(descuento, 0) + COALESCE(creditos, 0)) AS 'precio promedio de venta'
+SELECT producto, AVG(venta + impuestos + COALESCE(descuento, 0) + COALESCE(creditos, 0)) AS precio_promedio_de_venta
 FROM order_line_sale
 GROUP BY producto
 
 --Cual es la tasa de impuestos que se pago por cada orden de venta?
-SELECT orden, SUM(impuestos / venta) * 100 AS 'Tasa de Impuestos'
+SELECT orden, SUM(impuestos / venta) * 100 AS tasa_de_impuestos
 FROM order_line_sale
 GROUP BY orden
 
---Tarea 3
+
+--Clase 3
 
 --Mostrar nombre y codigo de producto, categoria y color para todos los productos de la marca Philips y Samsung, 
-SELECT nombre, codigo_producto, categoria, color 
-FROM product_master
-WHERE nombre LIKE '%Philips%' OR nombre LIKE '%SamsuNG%'
-
 --mostrando la leyenda "Unknown" cuando no hay un color disponible
-SELECT ISNULL(color, 'UNKNOWN')
+SELECT nombre, codigo_producto, categoria, COALESCE(color, 'Unknown')
 FROM product_master
+WHERE nombre LIKE '%Philips%' OR nombre LIKE '%Samsung%'
 
 --Calcular las ventas brutas y los impuestos pagados por pais y provincia en la moneda correspondiente.
 SELECT SUM(ols.venta) AS venta, SUM(ols.impuestos) AS impuestos, ols.moneda, sm.pais, sm.provincia
@@ -184,7 +181,7 @@ INNER JOIN super_store_count AS ssc ON sm.codigo_tienda = ssc.tienda
 GROUP BY sm.nombre
 
 --Cual es el nivel de inventario promedio en cada mes a nivel de codigo de producto y tienda; mostrar el resultado con el nombre de la tienda.
-SELECT sm.nombre, iv.sku, AVG(iv.inicial + iv.final) AS inventario, MONTH(iv.fecha) AS mes
+SELECT sm.nombre, iv.sku, AVG((iv.inicial + iv.final)/2) AS inventario, MONTH(iv.fecha) AS mes
 FROM inventory AS iv 
 INNER JOIN store_master AS sm ON iv.tienda = sm.codigo_tienda
 GROUP BY MONTH(iv.fecha), iv.sku, sm.nombre
@@ -192,120 +189,46 @@ ORDER BY sm.nombre
 
 --Calcular la cantidad de unidades vendidas por material. Para los productos que no tengan material usar 'Unknown', 
 --homogeneizar los textos si es necesario.
-SELECT ols.producto, SUM(ols.cantidad) AS cantidad, COALESCE(pm.material, 'Unknown') AS material
+SELECT ols.producto, 
+       SUM(ols.cantidad) AS cantidad, 
+	   LOWER(COALESCE(pm.material, 'Unknown')) AS material
 FROM order_line_sale AS ols
 INNER JOIN product_master AS pm ON pm.codigo_producto = ols.producto
-GROUP BY producto, COALESCE(pm.material, 'Unknown')
+GROUP BY producto, LOWER(COALESCE(pm.material, 'Unknown'))
 ORDER BY producto
-
 
 --Mostrar la tabla order_line_sale agregando una columna que represente el valor de venta bruta en 
 --cada linea convertido a dolares usando la tabla de tipo de cambio.
-SELECT fecha, 
-	   venta, 
-	   venta / (SELECT TOP 1 cotizacion_usd_peso FROM monthly_average_fx_rate ORDER BY mes DESC ) AS 'venta en dolares'
-FROM order_line_sale
+SELECT *,	   
+	   CASE WHEN moneda = 'ARS' THEN venta / mafr.cotizacion_usd_peso
+	        WHEN moneda = 'URU' THEN venta / mafr.cotizacion_usd_uru
+			WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN venta
+			WHEN moneda = 'EUR' THEN venta / mafr.cotizacion_usd_eur		
+	   END AS venta_bruta_en_dolares
+FROM order_line_sale AS ols
+INNER JOIN 
+monthly_average_fx_rate AS mafr ON MONTH(mafr.mes) = MONTH(ols.fecha) AND YEAR(mafr.mes) = YEAR(ols.fecha)
+;
 
 --Calcular cantidad de ventas totales de la empresa en dolares.
-SELECT SUM(venta) AS 'suma de venta', 
-	     SUM(venta) / (SELECT TOP 1 cotizacion_usd_peso FROM monthly_average_fx_rate ORDER BY mes DESC ) AS 'suma de venta en dolares'
-FROM order_line_sale
-
+SELECT 	   
+	   SUM(CASE WHEN moneda = 'ARS' THEN venta / mafr.cotizacion_usd_peso
+	        WHEN moneda = 'URU' THEN venta / mafr.cotizacion_usd_uru
+			WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN venta
+			WHEN moneda = 'EUR' THEN venta / mafr.cotizacion_usd_eur
+	   END) AS venta_bruta_en_dolares
+FROM order_line_sale AS ols
+INNER JOIN 
+monthly_average_fx_rate AS mafr ON MONTH(mafr.mes) = MONTH(ols.fecha) AND YEAR(mafr.mes) = YEAR(ols.fecha)
+;
 
 --Calcular la cantidad de items distintos de cada subsubcategoria que se llevan por numero de orden.
 --SELECT 
---	   ols.orden AS orden,
---       pm.subsubcategoria AS subsubcategoria,
---	   (SELECT COUNT(orden) + 1 FROM order_line_sale AS ols2
---	   INNER JOIN product_master AS pm2 ON ols2.producto = pm2.codigo_producto
---	   WHERE orden = ols.orden AND subsubcategoria != pm.subsubcategoria)
---FROM order_line_sale AS ols 
---INNER JOIN product_master AS pm ON ols.producto = pm.codigo_producto
---GROUP BY ols.orden, pm.subsubcategoria
-	   
---Tarea 4
-
---Crear un backup de la tabla product_master. Utilizar un esquema llamado "bkp" y agregar un prefijo al 
---nombre de la tabla con la fecha del backup en forma de numero entero.
-
-cREATE SCHEMA bkp;
-
-SELECT * INTO bkp.d20230331_product_master
-FROM dbo.product_master
-
---Hacer un update a la nueva tabla (creada en el punto anterior) de product_master agregando la leyendo "N/A"
---para los valores null de material y color. 
---Pueden utilizarse dos sentencias.
-
-UPDATE d20230331_product_master
-SET material = ISNULL(material, 'N/A'), color = ISNULL(color, 'N/A')
-
---Hacer un update a la tabla del punto anterior, actualizando la columa "is_active", 
---desactivando todos los productos en la subsubcategoria "Control Remoto".
-
-UPDATE d20230331_product_master
-SET is_active = 'False'
-WHERE subsubcategoria = 'Control remoto'
-
---Agregar una nueva columna a la tabla anterior llamada "is_local" indicando los productos producidos en Argentina y fuera de Argentina.
-
-ALTER TABLE d20230331_product_master
-ADD is_local VARCHAR(10);
-
---Agregar una nueva columna a la tabla de ventas llamada "line_key" que resulte ser la concatenacion de el numero de orden y el codigo de producto.
-
-ALTER TABLE d20230331_product_master
-ADD line_key VARCHAR(80);
-
-UPDATE d20230331_product_master
-SET line_key = ols.orden + ' - ' + pm.codigo_producto
-FROM d20230331_product_master AS pm
-INNER JOIN order_line_sale AS ols ON ols.producto = pm.codigo_producto
-
---Eliminar 
---todos los valores de la tabla "order_line_sale" para el POS 1.
-
-SELECT * INTO dbo.order_line_sale_bkp
-FROM order_line_sale
-
-DELETE FROM order_line_sale_bkp
-WHERE pos = 1
-
---Crear una tabla llamada "employees" (por el momento vacia) que tenga un id (creado de forma incremental), 
---nombre, apellido, fecha de entrada, fecha salida, telefono, pais, provincia, codigo_tienda, posicion. 
---Decidir cual es el tipo de dato mas acorde.
-
-CREATE TABLE employees (
-	id INT IDENTITY(1,1) PRIMARY KEY,
-	nombre VARCHAR(50),
-	apellido VARCHAR(50),
-	fecha_entrada DATE,
-	fecha_salida DATE,
-	telefono INT,
-	pais VARCHAR(20),
-	provincia VARCHAR(50),
-	codigo_tienda VARCHAR(20),
-	posicion VARCHAR(50)
-)
-
-
---Insertar nuevos valores a la tabla "employees" para los siguientes 4 empleados:
---Juan Perez, 2022-01-01, telefono +541113869867, Argentina, Santa Fe, tienda 2, Vendedor.
---Catalina Garcia, 2022-03-01, Argentina, Buenos Aires, tienda 2, Representante Comercial
---Ana Valdez, desde 2020-02-21 hasta 2022-03-01, España, Madrid, tienda 8, Jefe Logistica
---Fernando Moralez, 2022-04-04, España, Valencia, tienda 9, Vendedor.
-
-INSERT INTO employees (nombre, apellido, fecha_entrada, fecha_salida, telefono, pais, provincia, codigo_tienda, posicion)
-VALUES
-	 ('Juan', 'Perez', '2022-01-01', NULL, '541113869867', 'Argentina', 'Santa Fe', 'tienda 2', 'Vendedor'),
-         ('Catalina', 'Garcia', '2022-03-01', NULL , NULL ,'Argentina', 'Buenos Aires', 'tienda 2', 'Representante Comercial'),
-	 ('Ana', 'Valdez', '2020-02-21', '2022-03-01', NULL ,'España', 'Madrid', 'tienda 8', 'Jefe Logistica'),
-	 ('Fernando', 'Moralez', '2022-04-04', NULL, NULL,'España', 'Valencia', 'tienda 9', 'Vendedor');
-
-
---Crear un backup de la tabla "cost" agregandole una columna que se llame "last_updated_ts" que sea el momento exacto
---en el cual estemos realizando el backup en formato datetime.
-
-SELECT *, last_updated_ts = GETDATE()
-INTO cost_bkp FROM dbo.cost
-
+	   ols.orden AS orden,
+           pm.subsubcategoria AS subsubcategoria,
+	   (SELECT COUNT(orden) + 1 FROM order_line_sale AS ols2
+	   INNER JOIN product_master AS pm2 ON ols2.producto = pm2.codigo_producto
+	   WHERE orden = ols.orden AND subsubcategoria != pm.subsubcategoria)
+FROM order_line_sale AS ols 
+INNER JOIN product_master AS pm ON ols.producto = pm.codigo_producto
+GROUP BY ols.orden, pm.subsubcategoria
