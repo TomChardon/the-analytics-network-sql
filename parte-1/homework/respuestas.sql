@@ -202,8 +202,8 @@ ORDER BY producto
 SELECT *,	   
 	   CASE WHEN moneda = 'ARS' THEN venta / mafr.cotizacion_usd_peso
 	        WHEN moneda = 'URU' THEN venta / mafr.cotizacion_usd_uru
-			WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN venta
-			WHEN moneda = 'EUR' THEN venta / mafr.cotizacion_usd_eur		
+		WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN venta
+		WHEN moneda = 'EUR' THEN venta / mafr.cotizacion_usd_eur		
 	   END AS venta_bruta_en_dolares
 FROM order_line_sale AS ols
 INNER JOIN 
@@ -214,21 +214,33 @@ monthly_average_fx_rate AS mafr ON MONTH(mafr.mes) = MONTH(ols.fecha) AND YEAR(m
 SELECT 	   
 	   SUM(CASE WHEN moneda = 'ARS' THEN venta / mafr.cotizacion_usd_peso
 	        WHEN moneda = 'URU' THEN venta / mafr.cotizacion_usd_uru
-			WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN venta
-			WHEN moneda = 'EUR' THEN venta / mafr.cotizacion_usd_eur
+		WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN venta
+		WHEN moneda = 'EUR' THEN venta / mafr.cotizacion_usd_eur
 	   END) AS venta_bruta_en_dolares
 FROM order_line_sale AS ols
 INNER JOIN 
 monthly_average_fx_rate AS mafr ON MONTH(mafr.mes) = MONTH(ols.fecha) AND YEAR(mafr.mes) = YEAR(ols.fecha)
 ;
 
+--Mostrar en la tabla de ventas el margen de venta por cada linea. Siendo margen = (venta - descuento) - costo expresado en dolares.
+SELECT ols.*,
+       CASE WHEN moneda = 'ARS' THEN ((venta - COALESCE(descuento,0)) / mafr.cotizacion_usd_peso) - c.costo_promedio_usd
+       WHEN moneda = 'URU' THEN ((venta - COALESCE(descuento,0)) / mafr.cotizacion_usd_uru) - c.costo_promedio_usd
+       WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN (venta - COALESCE(descuento,0)) - c.costo_promedio_usd
+       WHEN moneda = 'EUR' THEN ((venta - COALESCE(descuento,0)) / mafr.cotizacion_usd_eur) - c.costo_promedio_usd
+       END AS margen
+FROM order_line_sale AS ols
+INNER JOIN monthly_average_fx_rate AS mafr ON MONTH(mafr.mes) = MONTH(ols.fecha) AND YEAR(mafr.mes) = YEAR(ols.fecha)
+INNER JOIN cost AS c ON c.codigo_producto = ols.producto;
+
+
 --Calcular la cantidad de items distintos de cada subsubcategoria que se llevan por numero de orden.
 SELECT 
-	   ols.orden AS orden,
-           pm.subsubcategoria AS subsubcategoria,
-	   (SELECT COUNT(orden) + 1 FROM order_line_sale AS ols2
-	   INNER JOIN product_master AS pm2 ON ols2.producto = pm2.codigo_producto
-	   WHERE orden = ols.orden AND subsubcategoria != pm.subsubcategoria)
+       ols.orden AS orden,
+       pm.subsubcategoria AS subsubcategoria,
+       (SELECT COUNT(orden) + 1 FROM order_line_sale AS ols2
+       INNER JOIN product_master AS pm2 ON ols2.producto = pm2.codigo_producto
+       WHERE orden = ols.orden AND subsubcategoria != pm.subsubcategoria)
 FROM order_line_sale AS ols 
 INNER JOIN product_master AS pm ON ols.producto = pm.codigo_producto
 GROUP BY ols.orden, pm.subsubcategoria
