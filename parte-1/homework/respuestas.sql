@@ -223,7 +223,7 @@ monthly_average_fx_rate AS mafr ON MONTH(mafr.mes) = MONTH(ols.fecha) AND YEAR(m
 ;
 
 --Calcular la cantidad de items distintos de cada subsubcategoria que se llevan por numero de orden.
---SELECT 
+SELECT 
 	   ols.orden AS orden,
            pm.subsubcategoria AS subsubcategoria,
 	   (SELECT COUNT(orden) + 1 FROM order_line_sale AS ols2
