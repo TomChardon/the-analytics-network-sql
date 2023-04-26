@@ -245,3 +245,89 @@ SELECT
 FROM order_line_sale AS ols 
 INNER JOIN product_master AS pm ON ols.producto = pm.codigo_producto
 GROUP BY ols.orden, pm.subsubcategoria
+
+--Clase 4
+
+--Crear un backup de la tabla product_master. Utilizar un esquema llamado "bkp" y agregar un prefijo al 
+--nombre de la tabla con la fecha del backup en forma de numero entero.
+
+CREATE SCHEMA bkp;
+
+SELECT * INTO bkp.d20230331_product_master
+FROM dbo.product_master
+
+--Hacer un update a la nueva tabla (creada en el punto anterior) de product_master agregando la leyendo "N/A"
+--para los valores null de material y color. 
+--Pueden utilizarse dos sentencias.
+
+UPDATE d20230331_product_master
+SET material = ISNULL(material, 'N/A'), color = ISNULL(color, 'N/A')
+
+--Hacer un update a la tabla del punto anterior, actualizando la columa "is_active", 
+--desactivando todos los productos en la subsubcategoria "Control Remoto".
+
+UPDATE d20230331_product_master
+SET is_active = 'False'
+WHERE subsubcategoria = 'Control remoto'
+
+--Agregar una nueva columna a la tabla anterior llamada "is_local" indicando los productos producidos en Argentina y fuera de Argentina.
+
+ALTER TABLE d20230331_product_master
+ADD is_local VARCHAR(10);
+
+--Agregar una nueva columna a la tabla de ventas llamada "line_key" que resulte ser la concatenacion de el numero de orden y el codigo de producto.
+
+ALTER TABLE d20230331_product_master
+ADD line_key VARCHAR(80);
+
+UPDATE d20230331_product_master
+SET line_key = ols.orden + ' - ' + pm.codigo_producto
+FROM d20230331_product_master AS pm
+INNER JOIN order_line_sale AS ols ON ols.producto = pm.codigo_producto
+
+--Eliminar 
+--todos los valores de la tabla "order_line_sale" para el POS 1.
+
+SELECT * INTO dbo.order_line_sale_bkp
+FROM order_line_sale
+
+DELETE FROM order_line_sale_bkp
+WHERE pos = 1
+
+--Crear una tabla llamada "employees" (por el momento vacia) que tenga un id (creado de forma incremental), 
+--nombre, apellido, fecha de entrada, fecha salida, telefono, pais, provincia, codigo_tienda, posicion. 
+--Decidir cual es el tipo de dato mas acorde.
+
+CREATE TABLE employees (
+	id INT IDENTITY(1,1) PRIMARY KEY,
+	nombre VARCHAR(50),
+	apellido VARCHAR(50),
+	fecha_entrada DATE,
+	fecha_salida DATE,
+	telefono INT,
+	pais VARCHAR(20),
+	provincia VARCHAR(50),
+	codigo_tienda VARCHAR(20),
+	posicion VARCHAR(50)
+)
+
+
+--Insertar nuevos valores a la tabla "employees" para los siguientes 4 empleados:
+--Juan Perez, 2022-01-01, telefono +541113869867, Argentina, Santa Fe, tienda 2, Vendedor.
+--Catalina Garcia, 2022-03-01, Argentina, Buenos Aires, tienda 2, Representante Comercial
+--Ana Valdez, desde 2020-02-21 hasta 2022-03-01, España, Madrid, tienda 8, Jefe Logistica
+--Fernando Moralez, 2022-04-04, España, Valencia, tienda 9, Vendedor.
+
+INSERT INTO employees (nombre, apellido, fecha_entrada, fecha_salida, telefono, pais, provincia, codigo_tienda, posicion)
+VALUES
+	 ('Juan', 'Perez', '2022-01-01', NULL, '541113869867', 'Argentina', 'Santa Fe', 'tienda 2', 'Vendedor'),
+         ('Catalina', 'Garcia', '2022-03-01', NULL , NULL ,'Argentina', 'Buenos Aires', 'tienda 2', 'Representante Comercial'),
+	 ('Ana', 'Valdez', '2020-02-21', '2022-03-01', NULL ,'España', 'Madrid', 'tienda 8', 'Jefe Logistica'),
+	 ('Fernando', 'Moralez', '2022-04-04', NULL, NULL,'España', 'Valencia', 'tienda 9', 'Vendedor');
+
+
+--Crear un backup de la tabla "cost" agregandole una columna que se llame "last_updated_ts" que sea el momento exacto
+--en el cual estemos realizando el backup en formato datetime.
+
+SELECT *, last_updated_ts = GETDATE()
+INTO cost_bkp FROM dbo.cost
