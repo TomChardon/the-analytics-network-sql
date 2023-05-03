@@ -307,7 +307,7 @@ SELECT fecha,
 	   inventario_promedio,
 	   costo_inventario_linea,
 	   is_last_snapshot,
-	   inventario_promedio / promedio_siete_dias as DOH
+	   inventario_promedio / promedio_siete_dias AS DOH
 FROM cte_calculos
 
 --Clase 8
