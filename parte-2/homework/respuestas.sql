@@ -266,10 +266,9 @@ WITH cte_ventas_totales AS (
 SELECT
 	fecha,
 	cantidad_total,
-	LEAD(cantidad_total, 7) OVER(ORDER BY fecha) AS 'semana anterior',
-	cantidad_total - LEAD(cantidad_total, 7) OVER(ORDER BY fecha) AS 'diferencia'
-FROM cte_ventas_totales
-ORDER BY fecha DESC;
+	LAG(cantidad_total, 7) OVER(ORDER BY fecha) AS 'semana anterior',
+	cantidad_total - LAG(cantidad_total, 7) OVER(ORDER BY fecha) AS 'diferencia'
+FROM cte_ventas_totales;
 
 --Crear una vista de inventario con la cantidad de inventario por dia, tienda y producto, que ademas va a contar con los siguientes datos:
 --Nombre y categorias de producto
