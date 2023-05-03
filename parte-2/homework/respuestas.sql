@@ -311,3 +311,89 @@ FROM cte_calculos
 
 --Clase 8
 
+--Realizar el Ejercicio 5 de la clase 6 donde calculabamos la contribucion de las ventas brutas de cada producto utilizando una window function.
+
+SELECT  orden,
+		producto,		
+		(venta / SUM(venta) OVER(PARTITION BY orden)) * 100 AS contribucion_venta
+FROM order_line_sale;
+
+--La regla de pareto nos dice que aproximadamente un 20% de los productos generan un 80% de las ventas. 
+--Armar una vista a nivel sku donde se pueda identificar por orden de contribucion, ese 20% aproximado de SKU mas importantes. (Nota: En este ejercicios estamos construyendo una tabla que muestra la regla de Pareto)
+
+
+WITH cte_calculos AS (
+SELECT  
+	    producto,		
+		(venta / SUM(venta) OVER()) * 100 AS contribucion_producto
+FROM order_line_sale
+)
+SELECT 
+	   producto,	  
+	   SUM(contribucion_producto) AS contribucion_producto
+FROM cte_calculos
+GROUP BY producto
+ORDER BY contribucion_producto DESC
+
+--Calcular el crecimiento de ventas por tienda mes a mes, con el valor nominal y el valor % de crecimiento.
+
+WITH cte_venta_tienda AS (
+SELECT 
+       YEAR(ols.fecha) AS año, 
+	   MONTH(ols.fecha) AS mes,
+       ols.tienda, 
+       ols.moneda AS valor_nominal,
+       SUM(venta) AS venta
+FROM order_line_sale AS ols
+GROUP BY tienda, moneda, YEAR(ols.fecha), MONTH(ols.fecha)
+)
+SELECT 
+	año,
+	mes,
+	tienda,
+	valor_nominal,	
+	CASE WHEN venta > LAG(venta) OVER(PARTITION BY tienda ORDER BY tienda) 
+	THEN ((venta - LAG(venta) OVER(PARTITION BY tienda ORDER BY tienda)) / venta) * 100
+	ELSE ((venta - LAG(venta) OVER(PARTITION BY tienda ORDER BY tienda)) / LAG(venta) OVER(PARTITION BY tienda ORDER BY tienda)) * 100 END AS valor_crecimiento	
+FROM cte_venta_tienda;
+
+--Crear una vista a partir de la tabla "return_movements" que este a nivel Orden de venta, item y que contenga las siguientes columnas:
+--Orden
+--Sku
+--Cantidad unidades retornadas
+--Valor USD retornado (resulta de la cantidad retornada * valor USD del precio unitario bruto con que se hizo la venta)
+--Nombre producto
+--Primera_locacion (primer lugar registrado, de la columna "desde", para la orden/producto)
+--Ultima_locacion (el ultimo lugar donde se registro, de la columna "hasta", el producto/orden)
+
+WITH cte_costo_promedio	AS (	
+	SELECT codigo_producto,
+	       AVG(costo_promedio_usd) AS costo_promedio_usd
+	FROM cost
+	GROUP BY codigo_producto
+)
+SELECT rm.orden_venta,
+	   rm.item,
+	   rm.cantidad,
+	   rm.cantidad * ccp.costo_promedio_usd AS costo_promedio,
+	   pm.nombre,
+	   rm.desde,
+	   rm.hasta
+FROM return_movements AS rm
+INNER JOIN cte_costo_promedio  AS ccp ON ccp.codigo_producto = rm.item
+INNER JOIN product_master AS pm ON pm.codigo_producto = rm.item
+
+--Crear una tabla calendario llamada "date" con las fechas del 2022 incluyendo el año fiscal y trimestre fiscal (en ingles Quarter). El año fiscal de la empresa comienza el primero Febrero de cada año y dura 12 meses. Realizar la tabla para 2022 y 2023. La tabla debe contener:
+--Fecha (date)
+--Mes (date)
+--Año (date)
+--Dia de la semana (text, ejemplo: "Monday")
+--"is_weekend" (boolean, indicando si es Sabado o Domingo)
+--Mes (text, ejemplo: June)
+--Año fiscal (date)
+--Año fiscal (text, ejemplo: "FY2022")
+--Trimestre fiscal (text, ejemplo: Q1)
+--Fecha del año anterior (date, ejemplo: 2021-01-01 para la fecha 2022-01-01)
+--Nota: En general una tabla date es creada para muchos años mas (minimo 10), por el momento nos ahorramos ese paso y de la creacion de feriados.
+
+
