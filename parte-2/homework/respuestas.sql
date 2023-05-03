@@ -24,23 +24,23 @@ CREATE VIEW v_ejercicio3_clase_6_prueba AS
 SELECT ols.*,
 	   CASE WHEN moneda = 'ARS' THEN ((venta - COALESCE(descuento,0)) / mafr.cotizacion_usd_peso) - c.costo_promedio_usd
 	        WHEN moneda = 'URU' THEN ((venta - COALESCE(descuento,0)) / mafr.cotizacion_usd_uru) - c.costo_promedio_usd
-			WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN (venta - COALESCE(descuento,0)) - c.costo_promedio_usd
-			WHEN moneda = 'EUR' THEN ((venta - COALESCE(descuento,0)) / mafr.cotizacion_usd_eur) - c.costo_promedio_usd
+		WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN (venta - COALESCE(descuento,0)) - c.costo_promedio_usd
+		WHEN moneda = 'EUR' THEN ((venta - COALESCE(descuento,0)) / mafr.cotizacion_usd_eur) - c.costo_promedio_usd
 	   END AS margen,
 	   CASE WHEN moneda = 'ARS' THEN venta / mafr.cotizacion_usd_peso
 	        WHEN moneda = 'URU' THEN venta  / mafr.cotizacion_usd_uru
-			WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN venta
-			WHEN moneda = 'EUR' THEN venta / mafr.cotizacion_usd_eur
+		WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN venta
+		WHEN moneda = 'EUR' THEN venta / mafr.cotizacion_usd_eur
 	   END AS ventas_en_dolares,
 	   CASE WHEN moneda = 'ARS' THEN  COALESCE(descuento,0) / mafr.cotizacion_usd_peso
 	        WHEN moneda = 'URU' THEN  COALESCE(descuento,0) / mafr.cotizacion_usd_uru
-			WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN COALESCE(descuento,0)
-			WHEN moneda = 'EUR' THEN COALESCE(descuento,0) / mafr.cotizacion_usd_eur
+		WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN COALESCE(descuento,0)
+		WHEN moneda = 'EUR' THEN COALESCE(descuento,0) / mafr.cotizacion_usd_eur
 	   END AS descuentos_en_dolares,
 	   CASE WHEN moneda = 'ARS' THEN ((venta - COALESCE(descuento,0)) / mafr.cotizacion_usd_peso) - c.costo_promedio_usd
 	        WHEN moneda = 'URU' THEN ((venta - COALESCE(descuento,0)) / mafr.cotizacion_usd_uru) - c.costo_promedio_usd
-			WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN (venta - COALESCE(descuento,0)) - c.costo_promedio_usd
-			WHEN moneda = 'EUR' THEN ((venta - COALESCE(descuento,0)) / mafr.cotizacion_usd_eur) - c.costo_promedio_usd
+		WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN (venta - COALESCE(descuento,0)) - c.costo_promedio_usd
+		WHEN moneda = 'EUR' THEN ((venta - COALESCE(descuento,0)) / mafr.cotizacion_usd_eur) - c.costo_promedio_usd
 	   END AS creditos_en_dolares
 FROM order_line_sale AS ols
 INNER JOIN monthly_average_fx_rate AS mafr ON MONTH(mafr.mes) = MONTH(ols.fecha) AND YEAR(mafr.mes) = YEAR(ols.fecha)
@@ -59,7 +59,7 @@ ORDER BY orden
 --Calcular el margen bruto a nivel Subcategoria de producto. Usar la vista creada.
 
 SELECT pm.subcategoria,
-	   SUM(vec.ventas_en_dolares) - SUM(c.costo_promedio_usd)  AS margen_bruto
+       SUM(vec.ventas_en_dolares) - SUM(c.costo_promedio_usd)  AS margen_bruto
 FROM product_master AS pm
 INNER JOIN v_ejercicio3_clase_6 AS vec ON pm.codigo_producto = vec.producto
 INNER JOIN cost AS c ON pm.codigo_producto = c.codigo_producto
@@ -69,10 +69,10 @@ GROUP BY subcategoria;
 --podes utilizarla.
 
 SELECT 
-	   ols2.orden,
-	   ols2.producto,	   
+       ols2.orden,
+       ols2.producto,	   
        SUM(ols2.venta) / 
-	   (SELECT SUM(ols1.venta) FROM order_line_sale AS ols1 WHERE ols1.orden = ols2.orden GROUP BY ols1.orden) * 100 AS contribucion_ventas_brutas
+       (SELECT SUM(ols1.venta) FROM order_line_sale AS ols1 WHERE ols1.orden = ols2.orden GROUP BY ols1.orden) * 100 AS contribucion_ventas_brutas
 FROM order_line_sale AS ols2
 GROUP BY ols2.producto, ols2.orden
 ORDER BY ols2.orden, ols2.producto
@@ -120,23 +120,23 @@ ALTER VIEW v_ejercicio3_clase_6 AS
 SELECT ols.*,
 	   CASE WHEN moneda = 'ARS' THEN ((venta - COALESCE(descuento,0)) / mafr.cotizacion_usd_peso) - c.costo_promedio_usd
 	        WHEN moneda = 'URU' THEN ((venta - COALESCE(descuento,0)) / mafr.cotizacion_usd_uru) - c.costo_promedio_usd
-			WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN (venta - COALESCE(descuento,0)) - c.costo_promedio_usd
-			WHEN moneda = 'EUR' THEN ((venta - COALESCE(descuento,0)) / mafr.cotizacion_usd_eur) - c.costo_promedio_usd
+		WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN (venta - COALESCE(descuento,0)) - c.costo_promedio_usd
+		WHEN moneda = 'EUR' THEN ((venta - COALESCE(descuento,0)) / mafr.cotizacion_usd_eur) - c.costo_promedio_usd
 	   END AS margen,
 	   CASE WHEN moneda = 'ARS' THEN venta / mafr.cotizacion_usd_peso
 	        WHEN moneda = 'URU' THEN venta  / mafr.cotizacion_usd_uru
-			WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN venta
-			WHEN moneda = 'EUR' THEN venta / mafr.cotizacion_usd_eur
+		WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN venta
+		WHEN moneda = 'EUR' THEN venta / mafr.cotizacion_usd_eur
 	   END AS ventas_en_dolares,
 	   CASE WHEN moneda = 'ARS' THEN  COALESCE(descuento,0) / mafr.cotizacion_usd_peso
 	        WHEN moneda = 'URU' THEN  COALESCE(descuento,0) / mafr.cotizacion_usd_uru
-			WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN COALESCE(descuento,0)
-			WHEN moneda = 'EUR' THEN COALESCE(descuento,0) / mafr.cotizacion_usd_eur
+		WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN COALESCE(descuento,0)
+		WHEN moneda = 'EUR' THEN COALESCE(descuento,0) / mafr.cotizacion_usd_eur
 	   END AS descuentos_en_dolares,
 	   CASE WHEN moneda = 'ARS' THEN ((venta - COALESCE(descuento,0)) / mafr.cotizacion_usd_peso) - c.costo_promedio_usd
 	        WHEN moneda = 'URU' THEN ((venta - COALESCE(descuento,0)) / mafr.cotizacion_usd_uru) - c.costo_promedio_usd
-			WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN (venta - COALESCE(descuento,0)) - c.costo_promedio_usd
-			WHEN moneda = 'EUR' THEN ((venta - COALESCE(descuento,0)) / mafr.cotizacion_usd_eur) - c.costo_promedio_usd
+		WHEN moneda = 'EUR' AND mafr.cotizacion_usd_eur = 0 THEN (venta - COALESCE(descuento,0)) - c.costo_promedio_usd
+		WHEN moneda = 'EUR' THEN ((venta - COALESCE(descuento,0)) / mafr.cotizacion_usd_eur) - c.costo_promedio_usd
 	   END AS creditos_en_dolares,
 	   s.nombre
 FROM order_line_sale AS ols
@@ -164,22 +164,22 @@ FROM v_ejercicio3_clase_6
 --Crear una nueva query que no genere duplicacion.
 
 SELECT orden,
-	   producto,
-	   tienda,
-	   fecha,
-	   SUM(cantidad),
-	   SUM(venta),
-	   SUM(descuento),
-	   SUM(impuestos),
-	   SUM(creditos),
-	   moneda,
-	   pos,
-	   is_walkout,
-	   SUM(margen),
-	   SUM(ventas_en_dolares),
-	   SUM(descuentos_en_dolares),
-	   SUM(creditos_en_dolares),
-	   nombre
+       producto,
+       tienda,
+       fecha,
+       SUM(cantidad),
+       SUM(venta),
+       SUM(descuento),
+       SUM(impuestos),
+       SUM(creditos),
+       moneda,
+       pos,
+       is_walkout,
+       SUM(margen),
+       SUM(ventas_en_dolares),
+       SUM(descuentos_en_dolares),
+       SUM(creditos_en_dolares),
+       nombre
 FROM v_ejercicio3_clase_6
 GROUP BY orden, producto, tienda, fecha, moneda, pos, is_walkout, nombre
 
@@ -207,8 +207,8 @@ FROM order_line_sale;
 SELECT ols.tienda,
 	   SUM(CASE WHEN ols.is_walkout = 'True' THEN 1 ELSE 0 END) AS 'ordenes walkout por tienda',
 	   SUM(CASE WHEN ols.moneda = 'ARS' AND ols.is_walkout = 'True' THEN ols.venta / mafr.cotizacion_usd_peso 
-		        WHEN ols.moneda = 'EUR' AND mafr.cotizacion_usd_eur != 0 AND ols.is_walkout = 'True' THEN ols.venta / mafr.cotizacion_usd_eur 
-				WHEN ols.moneda = 'URU' AND ols.is_walkout = 'True' THEN ols.venta / mafr.cotizacion_usd_uru 
+		    WHEN ols.moneda = 'EUR' AND mafr.cotizacion_usd_eur != 0 AND ols.is_walkout = 'True' THEN ols.venta / mafr.cotizacion_usd_eur 
+		    WHEN ols.moneda = 'URU' AND ols.is_walkout = 'True' THEN ols.venta / mafr.cotizacion_usd_uru 
 	   ELSE 0 END) AS 'ventas brutas en USD walkout por tienda',
 	  (SUM(CASE WHEN ols.is_walkout = 'True' THEN venta ELSE 0 END) / SUM(venta)) * 100 AS 'ventas walkout sobre total de ventas por tienda'
 FROM order_line_sale AS ols
@@ -236,9 +236,9 @@ WHERE duplicados > 1;
 WITH cte_ventas_USD AS (
 SELECT  
         ols.producto AS 'producto',
-		pm.subcategoria AS 'subcategoria',
-		SUM(CASE WHEN ols.moneda = 'URU' THEN ols.venta / mafr.cotizacion_usd_uru ELSE 0 END) +
-		SUM(CASE WHEN ols.moneda = 'EUR' AND cotizacion_usd_eur != 0 THEN ols.venta / mafr.cotizacion_usd_eur ELSE 0 END) AS 'ventas_usd'
+        pm.subcategoria AS 'subcategoria',
+	SUM(CASE WHEN ols.moneda = 'URU' THEN ols.venta / mafr.cotizacion_usd_uru ELSE 0 END) +
+ 	SUM(CASE WHEN ols.moneda = 'EUR' AND cotizacion_usd_eur != 0 THEN ols.venta / mafr.cotizacion_usd_eur ELSE 0 END) AS 'ventas_usd'
 FROM order_line_sale AS ols
 INNER JOIN product_master AS pm ON ols.producto = pm.codigo_producto
 INNER JOIN monthly_average_fx_rate AS mafr ON MONTH(ols.fecha) = MONTH(mafr.mes) AND YEAR(ols.fecha) = YEAR(mafr.mes)
@@ -259,7 +259,7 @@ GROUP BY producto, subcategoria, ventas_usd;
 
 WITH cte_ventas_totales AS (
 	SELECT ols.fecha AS 'fecha',
-		   SUM(ols.cantidad) AS 'cantidad_total'		   
+	       SUM(ols.cantidad) AS 'cantidad_total'		   
 	FROM order_line_sale AS ols
 	GROUP BY ols.fecha
 )
@@ -299,14 +299,14 @@ LEFT JOIN cost AS c ON c.codigo_producto = ols.producto
 LEFT JOIN inventory AS i ON i.sku = ols.producto
 )
 SELECT fecha,
-	   tienda,
-	   sku,	     
-	   nombre,
-	   pais,
-	   inventario_promedio,
-	   costo_inventario_linea,
-	   is_last_snapshot,
-	   inventario_promedio / promedio_siete_dias AS DOH
+       tienda,
+       sku,	     
+       nombre,
+       pais,
+       inventario_promedio,
+       costo_inventario_linea,
+       is_last_snapshot,
+       inventario_promedio / promedio_siete_dias AS DOH
 FROM cte_calculos
 
 --Clase 8
@@ -314,8 +314,8 @@ FROM cte_calculos
 --Realizar el Ejercicio 5 de la clase 6 donde calculabamos la contribucion de las ventas brutas de cada producto utilizando una window function.
 
 SELECT  orden,
-		producto,		
-		(venta / SUM(venta) OVER(PARTITION BY orden)) * 100 AS contribucion_venta
+	producto,		
+	(venta / SUM(venta) OVER(PARTITION BY orden)) * 100 AS contribucion_venta
 FROM order_line_sale;
 
 --La regla de pareto nos dice que aproximadamente un 20% de los productos generan un 80% de las ventas. 
@@ -325,7 +325,7 @@ FROM order_line_sale;
 WITH cte_calculos AS (
 SELECT  
 	    producto,		
-		(venta / SUM(venta) OVER()) * 100 AS contribucion_producto
+	    (venta / SUM(venta) OVER()) * 100 AS contribucion_producto
 FROM order_line_sale
 )
 SELECT 
@@ -340,7 +340,7 @@ ORDER BY contribucion_producto DESC
 WITH cte_venta_tienda AS (
 SELECT 
        YEAR(ols.fecha) AS año, 
-	   MONTH(ols.fecha) AS mes,
+       MONTH(ols.fecha) AS mes,
        ols.tienda, 
        ols.moneda AS valor_nominal,
        SUM(venta) AS venta
@@ -368,17 +368,17 @@ FROM cte_venta_tienda;
 
 WITH cte_costo_promedio	AS (	
 	SELECT codigo_producto,
-	       AVG(costo_promedio_usd) AS costo_promedio_usd
-	FROM cost
-	GROUP BY codigo_producto
+               AVG(costo_promedio_usd) AS costo_promedio_usd
+        FROM cost
+        GROUP BY codigo_producto
 )
 SELECT rm.orden_venta,
-	   rm.item,
-	   rm.cantidad,
-	   rm.cantidad * ccp.costo_promedio_usd AS costo_promedio,
-	   pm.nombre,
-	   rm.desde,
-	   rm.hasta
+       rm.item,
+       rm.cantidad,
+       rm.cantidad * ccp.costo_promedio_usd AS costo_promedio,
+       pm.nombre,
+       rm.desde,
+       rm.hasta
 FROM return_movements AS rm
 INNER JOIN cte_costo_promedio  AS ccp ON ccp.codigo_producto = rm.item
 INNER JOIN product_master AS pm ON pm.codigo_producto = rm.item
@@ -396,4 +396,28 @@ INNER JOIN product_master AS pm ON pm.codigo_producto = rm.item
 --Fecha del año anterior (date, ejemplo: 2021-01-01 para la fecha 2022-01-01)
 --Nota: En general una tabla date es creada para muchos años mas (minimo 10), por el momento nos ahorramos ese paso y de la creacion de feriados.
 
+WITH cte_dates
+AS
+(
+  SELECT CAST('20220101' as datetime) AS fecha
+  UNION ALL
+  SELECT DATEADD(dd, 1, fecha)
+  FROM cte_dates
+  WHERE DATEADD(dd, 1, fecha) <= '20231231'
+)
+SELECT fecha,
+	   YEAR(fecha) AS año,
+	   MONTH(fecha) AS mes,
+	   DATEPART(WEEKDAY, fecha) AS dia_semana,
+	   DATENAME(MONTH, fecha) AS mes_texto,
+	   CASE WHEN DATEPART(WEEKDAY, fecha) = 7 OR DATEPART(WEEKDAY, fecha) = 1 THEN 'True'	        
+	   ELSE 'False' 
+	   END AS is_weekend,
+	   YEAR(DATEADD(MONTH, -3, fecha)) AS año_fiscal,
+	   'FY' + CAST(YEAR(DATEADD(MONTH, -3, fecha)) AS VARCHAR(20)) AS año_fical_texto,
+	   DATEPART(QUARTER, fecha) AS trimestre_fiscal,
+	   'Q' + + CAST(DATEPART(QUARTER, fecha) AS VARCHAR(20)) AS trimestre_fical_texto
+INTO date
+FROM cte_dates
+OPTION (MAXRECURSION 0);
 
