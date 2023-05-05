@@ -194,8 +194,8 @@ GROUP BY orden, producto, tienda, fecha, moneda, pos, is_walkout, nombre
 --porcentaje de nulls en cada columna)
 
 SELECT 
-	   (CAST(SUM(CASE WHEN creditos IS NULL THEN 1 ELSE 0 END) AS NUMERIC(10, 5)) / COUNT(*)) * 100 AS 'porcentaje de creditos NULL',
-	   (CAST(SUM(CASE WHEN descuento IS NULL THEN 1 ELSE 0 END) AS NUMERIC(10, 5)) / COUNT(*)) * 100 AS 'porcentaje de descuentos NULL'
+	   (CAST(SUM(CASE WHEN creditos IS NULL THEN 1 ELSE 0 END) AS NUMERIC(10, 5)) / COUNT(*)) * 100 AS porcentaje_creditos_NULL,
+	   (CAST(SUM(CASE WHEN descuento IS NULL THEN 1 ELSE 0 END) AS NUMERIC(10, 5)) / COUNT(*)) * 100 AS porcentaje_descuentos_NULL
 FROM order_line_sale;
 
 --La columna "is_walkout" se refiere a los clientes que llegaron a la tienda y se fueron con el producto en la mano
@@ -205,12 +205,12 @@ FROM order_line_sale;
 --Cual es el porcentaje de las ventas brutas "walkout" sobre el total de ventas brutas por tienda?
 
 SELECT ols.tienda,
-	   SUM(CASE WHEN ols.is_walkout = 'True' THEN 1 ELSE 0 END) AS 'ordenes walkout por tienda',
+	   SUM(CASE WHEN ols.is_walkout = 'True' THEN 1 ELSE 0 END) AS ordenes_walkout_tienda,
 	   SUM(CASE WHEN ols.moneda = 'ARS' AND ols.is_walkout = 'True' THEN ols.venta / mafr.cotizacion_usd_peso 
-		    WHEN ols.moneda = 'EUR' AND mafr.cotizacion_usd_eur != 0 AND ols.is_walkout = 'True' THEN ols.venta / mafr.cotizacion_usd_eur 
-		    WHEN ols.moneda = 'URU' AND ols.is_walkout = 'True' THEN ols.venta / mafr.cotizacion_usd_uru 
-	   ELSE 0 END) AS 'ventas brutas en USD walkout por tienda',
-	  (SUM(CASE WHEN ols.is_walkout = 'True' THEN venta ELSE 0 END) / SUM(venta)) * 100 AS 'ventas walkout sobre total de ventas por tienda'
+		        WHEN ols.moneda = 'EUR' AND mafr.cotizacion_usd_eur != 0 AND ols.is_walkout = 'True' THEN ols.venta / mafr.cotizacion_usd_eur 
+				WHEN ols.moneda = 'URU' AND ols.is_walkout = 'True' THEN ols.venta / mafr.cotizacion_usd_uru 
+	   ELSE 0 END) AS ventas_brutas_USD_walkout_tienda,
+	  (SUM(CASE WHEN ols.is_walkout = 'True' THEN venta ELSE 0 END) / SUM(venta)) * 100 AS ventas_walkout_total_ventas_tienda
 FROM order_line_sale AS ols
 INNER JOIN monthly_average_fx_rate AS mafr ON MONTH(mafr.mes) = MONTH(ols.fecha) AND YEAR(mafr.mes) = YEAR(ols.fecha) 
 GROUP BY ols.tienda;
@@ -235,10 +235,10 @@ WHERE duplicados > 1;
 
 WITH cte_ventas_USD AS (
 SELECT  
-        ols.producto AS 'producto',
-        pm.subcategoria AS 'subcategoria',
-	SUM(CASE WHEN ols.moneda = 'URU' THEN ols.venta / mafr.cotizacion_usd_uru ELSE 0 END) +
- 	SUM(CASE WHEN ols.moneda = 'EUR' AND cotizacion_usd_eur != 0 THEN ols.venta / mafr.cotizacion_usd_eur ELSE 0 END) AS 'ventas_usd'
+        ols.producto AS producto,
+		pm.subcategoria AS subcategoria,
+		SUM(CASE WHEN ols.moneda = 'URU' THEN ols.venta / mafr.cotizacion_usd_uru ELSE 0 END) +
+		SUM(CASE WHEN ols.moneda = 'EUR' AND cotizacion_usd_eur != 0 THEN ols.venta / mafr.cotizacion_usd_eur ELSE 0 END) AS ventas_usd
 FROM order_line_sale AS ols
 INNER JOIN product_master AS pm ON ols.producto = pm.codigo_producto
 INNER JOIN monthly_average_fx_rate AS mafr ON MONTH(ols.fecha) = MONTH(mafr.mes) AND YEAR(ols.fecha) = YEAR(mafr.mes)
@@ -248,7 +248,7 @@ GROUP BY ols.producto, pm.subcategoria
 SELECT 
 	   producto,
 	   subcategoria,
-	   CAST(ventas_usd AS DECIMAL(10,5)) AS 'ventas_usd'
+	   CAST(ventas_usd AS DECIMAL(10,5)) AS ventas_usd
 FROM cte_ventas_USD
 WHERE  ventas_usd != 0
 GROUP BY producto, subcategoria, ventas_usd;
@@ -258,17 +258,16 @@ GROUP BY producto, subcategoria, ventas_usd;
 --y la diferencia entre ambos. Nota: resolver en dos querys usando en una CTEs y en la otra windows functions.
 
 WITH cte_ventas_totales AS (
-	SELECT ols.fecha AS 'fecha',
-	       SUM(ols.cantidad) AS 'cantidad_total'		   
+	SELECT ols.fecha AS fecha,
+		   SUM(ols.cantidad) AS cantidad_total		   
 	FROM order_line_sale AS ols
 	GROUP BY ols.fecha
 )
 SELECT
-	fecha,
-	cantidad_total,
-	LAG(cantidad_total, 7) OVER(ORDER BY fecha) AS 'semana anterior',
-	cantidad_total - LAG(cantidad_total, 7) OVER(ORDER BY fecha) AS 'diferencia'
-FROM cte_ventas_totales;
+	cte1.fecha,
+	cte2.cantidad_total - cte1.cantidad_total AS diferencia
+FROM cte_ventas_totales AS cte1
+INNER JOIN cte_ventas_totales AS cte2 ON cte1.fecha = DATEADD(DAY,-7,cte2.fecha)
 
 --Crear una vista de inventario con la cantidad de inventario por dia, tienda y producto, que ademas va a contar con los siguientes datos:
 --Nombre y categorias de producto
@@ -299,14 +298,14 @@ LEFT JOIN cost AS c ON c.codigo_producto = ols.producto
 LEFT JOIN inventory AS i ON i.sku = ols.producto
 )
 SELECT fecha,
-       tienda,
-       sku,	     
-       nombre,
-       pais,
-       inventario_promedio,
-       costo_inventario_linea,
-       is_last_snapshot,
-       inventario_promedio / promedio_siete_dias AS DOH
+	   tienda,
+	   sku,	     
+	   nombre,
+	   pais,
+	   inventario_promedio,
+	   costo_inventario_linea,
+	   is_last_snapshot,
+	   inventario_promedio / promedio_siete_dias AS DOH
 FROM cte_calculos
 
 --Clase 8
