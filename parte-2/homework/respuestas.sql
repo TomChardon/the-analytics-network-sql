@@ -207,8 +207,8 @@ FROM order_line_sale;
 SELECT ols.tienda,
 	   SUM(CASE WHEN ols.is_walkout = 'True' THEN 1 ELSE 0 END) AS ordenes_walkout_tienda,
 	   SUM(CASE WHEN ols.moneda = 'ARS' AND ols.is_walkout = 'True' THEN ols.venta / mafr.cotizacion_usd_peso 
-		        WHEN ols.moneda = 'EUR' AND mafr.cotizacion_usd_eur != 0 AND ols.is_walkout = 'True' THEN ols.venta / mafr.cotizacion_usd_eur 
-				WHEN ols.moneda = 'URU' AND ols.is_walkout = 'True' THEN ols.venta / mafr.cotizacion_usd_uru 
+	   WHEN ols.moneda = 'EUR' AND mafr.cotizacion_usd_eur != 0 AND ols.is_walkout = 'True' THEN ols.venta / mafr.cotizacion_usd_eur 
+	   WHEN ols.moneda = 'URU' AND ols.is_walkout = 'True' THEN ols.venta / mafr.cotizacion_usd_uru 
 	   ELSE 0 END) AS ventas_brutas_USD_walkout_tienda,
 	  (SUM(CASE WHEN ols.is_walkout = 'True' THEN venta ELSE 0 END) / SUM(venta)) * 100 AS ventas_walkout_total_ventas_tienda
 FROM order_line_sale AS ols
@@ -222,7 +222,7 @@ GROUP BY ols.tienda;
 
 WITH cte_duplicados AS (
 SELECT orden,
-	   ROW_NUMBER() OVER(PARTITION BY orden ORDER BY orden) AS duplicados
+       ROW_NUMBER() OVER(PARTITION BY orden ORDER BY orden) AS duplicados
 FROM order_line_sale
 )
 SELECT 
@@ -314,17 +314,16 @@ FROM cte_calculos
 
 SELECT  orden,
 	producto,		
-	(venta / SUM(venta) OVER(PARTITION BY orden)) * 100 AS contribucion_venta
+		(venta / SUM(venta) OVER(PARTITION BY orden)) * 100 AS contribucion_venta
 FROM order_line_sale;
 
 --La regla de pareto nos dice que aproximadamente un 20% de los productos generan un 80% de las ventas. 
 --Armar una vista a nivel sku donde se pueda identificar por orden de contribucion, ese 20% aproximado de SKU mas importantes. (Nota: En este ejercicios estamos construyendo una tabla que muestra la regla de Pareto)
 
-
 WITH cte_calculos AS (
 SELECT  
-	    producto,		
-	    (venta / SUM(venta) OVER()) * 100 AS contribucion_producto
+       producto,		
+       (venta / SUM(venta) OVER()) * 100 AS contribucion_producto
 FROM order_line_sale
 )
 SELECT 
@@ -367,17 +366,17 @@ FROM cte_venta_tienda;
 
 WITH cte_costo_promedio	AS (	
 	SELECT codigo_producto,
-               AVG(costo_promedio_usd) AS costo_promedio_usd
-        FROM cost
-        GROUP BY codigo_producto
+	       AVG(costo_promedio_usd) AS costo_promedio_usd
+	FROM cost
+	GROUP BY codigo_producto
 )
 SELECT rm.orden_venta,
-       rm.item,
-       rm.cantidad,
-       rm.cantidad * ccp.costo_promedio_usd AS costo_promedio,
-       pm.nombre,
-       rm.desde,
-       rm.hasta
+	   rm.item,
+	   rm.cantidad,
+	   rm.cantidad * ccp.costo_promedio_usd AS costo_promedio,
+	   pm.nombre,
+	   FIRST_VALUE(desde) OVER(PARTITION BY orden_venta, item ORDER BY id_movimiento ASC) AS primera_locacion,
+	   LAST_VALUE(hasta) OVER(PARTITION BY orden_venta, item ORDER BY id_movimiento ASC) AS ultima_locacion
 FROM return_movements AS rm
 INNER JOIN cte_costo_promedio  AS ccp ON ccp.codigo_producto = rm.item
 INNER JOIN product_master AS pm ON pm.codigo_producto = rm.item
@@ -398,7 +397,7 @@ INNER JOIN product_master AS pm ON pm.codigo_producto = rm.item
 WITH cte_dates
 AS
 (
-  SELECT CAST('20220101' as datetime) AS fecha
+  SELECT CAST('20220101' AS DATETIME) AS fecha
   UNION ALL
   SELECT DATEADD(dd, 1, fecha)
   FROM cte_dates
