@@ -419,3 +419,93 @@ INTO date
 FROM cte_dates
 OPTION (MAXRECURSION 0);
 
+--Clase 9
+
+--Calcular el crecimiento de ventas por tienda mes a mes, con el valor nominal y el valor % de crecimiento. Utilizar self join.
+
+WITH cte_ols AS(
+SELECT  
+	    YEAR(fecha) AS año,
+		MONTH(fecha) AS mes,
+		tienda,
+		moneda,
+		SUM(venta) AS venta
+FROM order_line_sale AS o1
+GROUP BY o1.tienda, YEAR(fecha), MONTH(fecha), moneda
+)
+SELECT  
+	    o1.año,
+		o1.mes,
+		o1.tienda,
+		o1.moneda,		
+		CASE WHEN o1.venta > o2.venta AND o1.mes > o2.mes THEN ((o1.venta - o2.venta) / o1.venta) * 100 
+			 WHEN o1.venta < o2.venta THEN ((o1.venta - o2.venta) / o2.venta) * 100 
+		END AS valor_crecimiento
+FROM cte_ols AS o1
+INNER JOIN cte_ols AS o2 ON o1.tienda = o2.tienda
+WHERE  o1.mes > o2.mes
+ORDER BY tienda, año, mes
+
+--Hacer un update a la tabla de product_master agregando una columna llamada "marca", con la marca de cada producto con la primer letra en mayuscula. 
+--Sabemos que las marcas que tenemos son: Levi's, Tommy Hilfiger, Samsung, Phillips, Acer, JBL y Motorola. En caso de no encontrarse en la lista usar 'Unknown'.
+
+ALTER TABLE product_master
+ADD marca VARCHAR(50) NULL;
+
+UPDATE product_master 
+SET marca = 
+      CASE  
+        WHEN marca = LOWER(LEFT(s.nombre, 1)) THEN UPPER(LEFT(s.nombre, 1)) + SUBSTRING(s.nombre, 2, 50)         
+        ELSE 'Unknown'
+      END 
+FROM product_master AS pm
+INNER JOIN suppliers AS s
+ON s.codigo_producto = pm.codigo_producto;
+
+--Un jefe de area tiene una tabla que contiene datos sobre las principales empresas de distintas industrias en rubros que pueden ser competencia:
+
+--empresa	        rubro	        facturacion
+--El Corte Ingles	Departamental	$110.99B
+--Mercado Libre	    ECOMMERCE	    $115.86B
+--Fallabela	        departamental	$20.46M
+--Tienda Inglesa	Departamental	$10,78M
+--Zara	            INDUMENTARIA	$999.98M
+
+--Armar una query que refleje lo siguiente:
+
+--Rubro
+--FacturacionTotal (total de facturación por rubro).
+--Ordenadas por la columna rubro en orden ascendente.
+--La columna FacturacionTotal debe estar expresada en millones/billones según corresponda y con 2 decimales después de la coma. 
+--Los elementos de la columna rubro debe estar expresados en letra minúscula.
+
+--Output esperado:
+--rubro	           facturacion_total
+--departamental	   111.01B
+--ecommerce	       115.86B
+--indumentaria	   999.98M
+
+CREATE TABLE empresas (
+	empresa VARCHAR(50),
+	rubro VARCHAR(50),
+	facturacion DECIMAL(20,2)
+)
+
+INSERT INTO empresas (empresa, rubro, facturacion)
+VALUES
+('El Corte Ingles', 'Departamental', 1109900000000),
+('Mercado Libre', 'ECOMMERCE', 1158600000000),
+('Fallabela', 'departamental', 20460000),
+('Tienda Inglesa', 'Departamental', 10780000),
+('Zara', 'INDUMENTARIA', 999980000);
+
+
+SELECT
+	   LOWER(rubro) AS rubro, 	   
+	   CASE 
+	       WHEN LEN(CAST(SUM(facturacion) AS VARCHAR(50))) < 13  THEN SUBSTRING(CAST(SUM(facturacion) AS VARCHAR(50)), 1, 3) + '.' + SUBSTRING(CAST(SUM(facturacion) AS VARCHAR(50)), 4,2) +'M'
+		   WHEN LEN(CAST(SUM(facturacion) AS VARCHAR(50))) > 13   THEN SUBSTRING(CAST(SUM(facturacion) AS VARCHAR(50)), 1, 3) + '.' + SUBSTRING(CAST(SUM(facturacion) AS VARCHAR(50)), 4,2) + 'B'
+	    END AS facturacion
+FROM empresas
+GROUP BY rubro
+
