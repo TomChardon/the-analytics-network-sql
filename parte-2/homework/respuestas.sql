@@ -462,13 +462,14 @@ FROM product_master AS pm
 INNER JOIN suppliers AS s
 ON s.codigo_producto = pm.codigo_producto;
 
+
 --Un jefe de area tiene una tabla que contiene datos sobre las principales empresas de distintas industrias en rubros que pueden ser competencia:
 
 --empresa	        rubro	        facturacion
 --El Corte Ingles	Departamental	$110.99B
 --Mercado Libre	    ECOMMERCE	    $115.86B
 --Fallabela	        departamental	$20.46M
---Tienda Inglesa	Departamental	$10,78M
+--Tienda Inglesa	Departamental	$10.78M
 --Zara	            INDUMENTARIA	$999.98M
 
 --Armar una query que refleje lo siguiente:
@@ -488,24 +489,43 @@ ON s.codigo_producto = pm.codigo_producto;
 CREATE TABLE empresas (
 	empresa VARCHAR(50),
 	rubro VARCHAR(50),
-	facturacion DECIMAL(20,2)
+	facturacion VARCHAR(50)
 )
 
 INSERT INTO empresas (empresa, rubro, facturacion)
 VALUES
-('El Corte Ingles', 'Departamental', 1109900000000),
-('Mercado Libre', 'ECOMMERCE', 1158600000000),
-('Fallabela', 'departamental', 20460000),
-('Tienda Inglesa', 'Departamental', 10780000),
-('Zara', 'INDUMENTARIA', 999980000);
+('El Corte Ingles', 'Departamental', '$110.99B'),
+('Mercado Libre', 'ECOMMERCE', '$115.86B'),
+('Fallabela', 'departamental', '$20.46M'),
+('Tienda Inglesa', 'Departamental', '$10,78M'),
+('Zara', 'INDUMENTARIA', '$999.98M');
 
 
-SELECT
-	   LOWER(rubro) AS rubro, 	   
-	   CASE 
-	       WHEN LEN(CAST(SUM(facturacion) AS VARCHAR(50))) < 13  THEN SUBSTRING(CAST(SUM(facturacion) AS VARCHAR(50)), 1, 3) + '.' + SUBSTRING(CAST(SUM(facturacion) AS VARCHAR(50)), 4,2) +'M'
-		   WHEN LEN(CAST(SUM(facturacion) AS VARCHAR(50))) > 13   THEN SUBSTRING(CAST(SUM(facturacion) AS VARCHAR(50)), 1, 3) + '.' + SUBSTRING(CAST(SUM(facturacion) AS VARCHAR(50)), 4,2) + 'B'
-	    END AS facturacion
+WITH cte_facturacion AS (
+SELECT 	   
+	   LOWER(rubro) AS rubro,
+	   CASE 	    
+		WHEN RIGHT(facturacion, 1) = 'B'  THEN CAST(REPLACE(REPLACE(REPLACE(REPLACE(facturacion, 'B', '0000000'), '$', ''), '.', ''), ',', '') AS DECIMAL(15,0))
+		WHEN RIGHT(facturacion, 1) = 'M'  THEN CAST(REPLACE(REPLACE(REPLACE(REPLACE(facturacion, 'M', '0000'), '$', ''), '.', ''), ',', '') AS DECIMAL(15,0))
+	   END AS facturacion
 FROM empresas
+),
+cte_suma AS (
+SELECT 
+	   rubro,
+	   CAST(SUM(facturacion) AS VARCHAR(20)) AS facturacion
+FROM cte_facturacion
 GROUP BY rubro
+)
+SELECT 
+	  rubro,
+	  CASE 
+	      WHEN LEN(facturacion) = 12 THEN '$' + SUBSTRING(facturacion,1,3) + '.' +SUBSTRING(facturacion, 4, 2) + 'B'
+		  WHEN LEN(facturacion) = 11 THEN '$' + SUBSTRING(facturacion,1,2) + '.' +SUBSTRING(facturacion, 3, 2) + 'B'
+		  WHEN LEN(facturacion) = 10 THEN '$' + SUBSTRING(facturacion,1,1) + '.' +SUBSTRING(facturacion, 2, 2) + 'B'
+		  WHEN LEN(facturacion) = 9 THEN '$' + SUBSTRING(facturacion,1,3) + '.' +SUBSTRING(facturacion, 4, 2) + 'M'
+		  WHEN LEN(facturacion) = 8 THEN '$' + SUBSTRING(facturacion,1,2) + '.' +SUBSTRING(facturacion, 3, 2) + 'M'
+		  WHEN LEN(facturacion) = 7 THEN '$' + SUBSTRING(facturacion,1,1) + '.' +SUBSTRING(facturacion, 2, 2) + 'M'		  
+	  END AS facturacion
+FROM cte_suma
 
