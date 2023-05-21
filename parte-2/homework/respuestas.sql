@@ -221,15 +221,23 @@ GROUP BY ols.tienda;
 --si llegan mas ordenes con duplicaciones.
 
 WITH cte_duplicados AS (
-SELECT orden,
-       ROW_NUMBER() OVER(PARTITION BY orden ORDER BY orden) AS duplicados
-FROM order_line_sale
+	SELECT orden,
+		   ROW_NUMBER() OVER(PARTITION BY orden ORDER BY orden) AS duplicados
+	FROM order_line_sale
 )
 SELECT 
 	   orden,
 	   duplicados
 FROM cte_duplicados
 WHERE duplicados > 1;
+
+WITH cte_duplicados as (
+	SELECT *, 
+		   ROW_NUMBER() OVER (PARTITION BY orden ORDER BY orden) AS conteo
+	FROM order_line_sale
+)
+SELECT * FROM cte_duplicados
+WHERE conteo = 1
 
 --Obtener las ventas totales en USD de productos que NO sean de la categoria "TV" NI esten en tiendas de Argentina.
 
