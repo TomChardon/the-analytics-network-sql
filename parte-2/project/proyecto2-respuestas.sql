@@ -1,6 +1,7 @@
--- Realizado con SQL Server.
+--Realizado con SQL Server.
 
 USE Ceroamessi;
+
 
 WITH cte_devoluciones AS (
 	SELECT DISTINCT orden_venta,
@@ -115,8 +116,9 @@ cte_ssot AS (
 	LEFT JOIN cte_market_count AS mc ON mc.tienda = ols.tienda AND mc.fecha = ols.fecha
 	LEFT JOIN cte_super_store_count AS ssc ON ssc.tienda = ols.tienda AND ssc.fecha = ols.fecha
 )
-SELECT *
+SELECT * INTO proyecto_2
 FROM cte_ssot
+
 
 --Ventas brutas.
 --SELECT SUM(ventas_brutas_dolares) AS ventas_brutas
@@ -175,4 +177,3 @@ FROM cte_ssot
 --Ratio de conversion.
 --SELECT ROUND(CAST((COUNT(orden))AS FLOAT) / CAST(SUM(conteo_total) AS FLOAT),4) * 100 AS ratio_conversion
 --FROM cte_ssot
-
