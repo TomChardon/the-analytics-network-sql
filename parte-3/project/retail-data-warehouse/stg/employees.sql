@@ -1,5 +1,5 @@
 
-CREATE TABLE [dbo].[employees2](
+CREATE TABLE [dbo].[employees](
 	[id] [int] IDENTITY(1,1) NOT NULL,
 	[nombre] [varchar](50) NULL,
 	[apellido] [varchar](50) NULL,
