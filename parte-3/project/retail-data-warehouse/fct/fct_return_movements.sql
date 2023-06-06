@@ -12,3 +12,4 @@ CREATE TABLE [dbo].[return_movements](
 	CONSTRAINT FK_returnmovements_producto FOREIGN KEY ([item]) REFERENCES product_master ([codigo_producto]),
 	PRIMARY KEY CLUSTERED ([id_orden_item])
 ) 
+
