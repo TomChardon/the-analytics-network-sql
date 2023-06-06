@@ -1,5 +1,4 @@
 CREATE TABLE [dbo].[product_master](
-	[id_producto] INT IDENTITY(1,1) NOT NULL,
 	[codigo_producto] [varchar](255) NOT NULL,
 	[nombre] [varchar](255) NULL,
 	[categoria] [varchar](255) NULL,
@@ -13,5 +12,6 @@ CREATE TABLE [dbo].[product_master](
 	[has_bluetooth] [varchar](10) NULL,
 	[talle] [varchar](255) NULL,
 	[marca] [varchar](50) NULL,
-	PRIMARY KEY CLUSTERED ([id_producto])	
+	PRIMARY KEY CLUSTERED ([codigo_producto])	
 )
+
