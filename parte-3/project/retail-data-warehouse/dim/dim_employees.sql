@@ -1,5 +1,5 @@
 CREATE TABLE [dbo].[employees](
-	[id_employee] INT IDENTITY(1,1) NOT NULL,
+	[id] INT IDENTITY(1,1) NOT NULL,
 	[nombre] [varchar](50) NULL,
 	[apellido] [varchar](50) NULL,
 	[fecha_entrada] [date] NULL,
@@ -9,5 +9,5 @@ CREATE TABLE [dbo].[employees](
 	[provincia] [varchar](50) NULL,
 	[codigo_tienda] [varchar](20) NULL,
 	[posicion] [varchar](50) NULL,
-	PRIMARY KEY CLUSTERED ([id_employee])
+	PRIMARY KEY CLUSTERED ([id])
 )
